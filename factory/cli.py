@@ -858,6 +858,29 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_log(args: argparse.Namespace) -> int:
+    """Append a structured event to .factory/events.jsonl."""
+    import json as json_mod
+
+    from factory.events import emit_event
+
+    project_path = Path(args.path).resolve()
+    event_type = args.event_type
+    data_str = getattr(args, "data", None)
+
+    if data_str:
+        try:
+            data = json_mod.loads(data_str)
+        except json_mod.JSONDecodeError as exc:
+            print(f"Error: invalid JSON in --data: {exc}", file=sys.stderr)
+            return 1
+    else:
+        data = {}
+
+    emit_event(project_path, event_type, data=data)
+    return 0
+
+
 def cmd_resume(args: argparse.Namespace) -> int:
     """Load checkpoint and display resume context for the CEO."""
     from factory.checkpoint import format_checkpoint, load_checkpoint
@@ -2077,6 +2100,12 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("resume", help="Load checkpoint and display resume context")
     p.add_argument("path", help="Path to the project")
 
+    # log
+    p = sub.add_parser("log", help="Append a structured event to .factory/events.jsonl")
+    p.add_argument("path", help="Path to the project")
+    p.add_argument("event_type", help="Event type (e.g. phase.research.completed)")
+    p.add_argument("--data", help="JSON data payload")
+
     # vault-init
     p = sub.add_parser("vault-init", help="Create the factory Obsidian vault")
 
@@ -2271,6 +2300,7 @@ def main(argv: list[str] | None = None) -> int:
         "review": cmd_review,
         "checkpoint": cmd_checkpoint,
         "resume": cmd_resume,
+        "log": cmd_log,
         "vault-init": cmd_vault_init,
         "self-update": cmd_self_update,
         "install": cmd_install,
