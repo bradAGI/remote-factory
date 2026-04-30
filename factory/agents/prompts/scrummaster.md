@@ -12,6 +12,7 @@ Read these files in the target project's `.factory/` directory:
 4. **`strategy/current.md`** — the current strategy (if it exists, strategy phase is complete).
 5. **`results.tsv`** — experiment history with scores and verdicts.
 6. **`config.json`** — project configuration.
+7. **`reviews/archivist-checkpoints.md`** — tracks which phases have had the archivist run. Each line is a checkbox with a phase name and timestamp.
 
 ## How to Determine Sprint Status
 
@@ -73,9 +74,11 @@ Use these signals to determine phase completion:
 | Build (per hypothesis) | `phase.build.completed` event for that exp_id, OR `ceo-verdict-builder.md` exists |
 | Eval | `phase.eval.completed` event for that exp_id, OR `experiments/NNN/eval_after.json` exists |
 | Verdict | `phase.verdict` event for that exp_id, OR `experiments/NNN/verdict.json` exists |
-| Archive | `phase.archive.completed` event for that exp_id |
+| Archive | `phase.archive.completed` event for that exp_id, OR `reviews/archivist-checkpoints.md` has an entry for this phase |
 
 Use multiple signals because any single one might be missing (crash during write, path bug, etc.). If ANY signal indicates completion, treat it as completed.
+
+**Temporal disambiguation:** Disk artifacts (review files, strategy files) survive across sprints. When checking file-based signals, compare the file's modification time against the `sprint.started` event timestamp. If a file is older than the current sprint start, it is a leftover from a previous sprint — do NOT treat it as evidence of current-sprint completion. Only event-log entries are cycle-scoped automatically (via the `sprint.started` boundary).
 
 ## Important
 

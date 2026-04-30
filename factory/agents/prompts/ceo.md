@@ -380,6 +380,21 @@ When the user approves the spec:
 
 The project doesn't exist or is incomplete. **You MUST still follow the full agent pipeline.** Do NOT jump straight to the Builder.
 
+### Step B-0: Sprint Standup (Scrum Master)
+
+Before any work, run a standup to check if a previous Build sprint was interrupted:
+
+```bash
+factory agent scrummaster --task "Run standup for $PROJECT_PATH. Read .factory/events.jsonl, reviews, experiments, strategy, and results.tsv. Report sprint status (FRESH or RESUME), completed phases, in-progress work, pending work, and a specific recommendation for what to do next." --project "$PROJECT_PATH" --timeout 120
+```
+
+- **If RESUME:** Follow the recommendation. Skip completed build phases.
+- **If FRESH:** Proceed with B0 (Research) below.
+
+```bash
+factory log "$PROJECT_PATH" "sprint.started" --data '{"mode": "build"}'
+```
+
 ### BUILD PIPELINE COMPLETION — CRITICAL (NON-OVERRIDABLE)
 
 **You MUST complete ALL planned phases (B0 through B6) before exiting Build mode.**
@@ -976,6 +991,11 @@ Then write checkpoint:
 echo "- [x] archivist after build — $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$PROJECT_PATH/.factory/reviews/archivist-checkpoints.md"
 ```
 
+Log milestone:
+```bash
+factory log "$PROJECT_PATH" "phase.build.completed" --data "{\"exp_id\": $EXP_ID}"
+```
+
 #### 2e. Guard Check (Reviewer Agent)
 
 ```bash
@@ -1014,6 +1034,11 @@ State whether the hypothesis was validated." --project "$PROJECT_PATH"
 ```
 
 Save output as `score_after`.
+
+Log milestone:
+```bash
+factory log "$PROJECT_PATH" "phase.eval.completed" --data "{\"exp_id\": $EXP_ID}"
+```
 
 #### 2f-e2e. E2E Verification
 
@@ -1167,7 +1192,12 @@ echo "- [x] archivist after experiment $EXP_ID ($VERDICT) — $(date -u +%Y-%m-%
 
 Log milestone:
 ```bash
-factory log "$PROJECT_PATH" "phase.verdict" --data '{"verdict": "'$VERDICT'", "exp_id": '$EXP_ID'}'
+factory log "$PROJECT_PATH" "phase.archive.completed" --data "{\"exp_id\": $EXP_ID}"
+```
+
+Log milestone:
+```bash
+factory log "$PROJECT_PATH" "phase.verdict" --data "{\"verdict\": \"$VERDICT\", \"exp_id\": $EXP_ID}"
 ```
 
 This MUST happen before proceeding to the next hypothesis or to Step 3.

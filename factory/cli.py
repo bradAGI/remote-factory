@@ -877,7 +877,8 @@ def cmd_log(args: argparse.Namespace) -> int:
     else:
         data = {}
 
-    emit_event(project_path, event_type, data=data)
+    agent = getattr(args, "agent", None)
+    emit_event(project_path, event_type, agent=agent, data=data)
     return 0
 
 
@@ -1189,11 +1190,6 @@ def cmd_ceo(args: argparse.Namespace) -> int:
         interactive_idea=interactive_idea,
     )
 
-    from factory.checkpoint import clear_checkpoint, format_checkpoint, load_checkpoint
-    checkpoint = load_checkpoint(project_path)
-    if checkpoint:
-        task += f"\n\n## Resume Context\n\n{format_checkpoint(checkpoint)}"
-
     if headless:
         # Non-interactive pipe mode (for scripting, cron, tmux)
         # Uses completion guard to auto-resume on premature exit
@@ -1208,8 +1204,6 @@ def cmd_ceo(args: argparse.Namespace) -> int:
             timeout=3600.0,
         ))
         print(result)
-        if code == 0:
-            clear_checkpoint(project_path)
         if code != 0:
             return code
         return _chain_modes(
@@ -1737,7 +1731,6 @@ def _run_single_cycle(
 ) -> int:
     """Execute a single factory run cycle via the CEO agent. Returns 0 on success, 1 on error."""
     from factory.agents.runner import invoke_agent
-    from factory.checkpoint import clear_checkpoint, format_checkpoint, load_checkpoint
 
     if focus:
         from factory.study import add_backlog_item
@@ -1749,10 +1742,6 @@ def _run_single_cycle(
         discover_only=discover_only,
     )
 
-    checkpoint = load_checkpoint(project_path)
-    if checkpoint:
-        task += f"\n\n## Resume Context\n\n{format_checkpoint(checkpoint)}"
-
     result, code = _run(invoke_agent(
         "ceo",
         task,
@@ -1761,9 +1750,6 @@ def _run_single_cycle(
         dangerously_skip_permissions=True,
         model=model,
     ))
-
-    if code == 0:
-        clear_checkpoint(project_path)
 
     print(result)
     return code
@@ -2105,6 +2091,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("path", help="Path to the project")
     p.add_argument("event_type", help="Event type (e.g. phase.research.completed)")
     p.add_argument("--data", help="JSON data payload")
+    p.add_argument("--agent", help="Agent name to attribute the event to")
 
     # vault-init
     p = sub.add_parser("vault-init", help="Create the factory Obsidian vault")
