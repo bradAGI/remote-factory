@@ -182,8 +182,6 @@ The Scrum Master agent handles crash recovery automatically. At the start of eve
 
 If the Scrum Master reports **RESUME**, follow its recommendation exactly — it will tell you which phases are complete and where to pick up. Do NOT restart from scratch.
 
-If your task includes a `## Resume Context` block (legacy fallback), treat it the same way: skip completed phases, read the surviving strategy from `.factory/strategy/current.md`, resume at the first uncompleted hypothesis.
-
 > **Note:** Use `factory log` to record milestones at each phase boundary.
 > The Scrum Master reads these on the next startup to determine sprint state.
 
@@ -388,10 +386,11 @@ Before any work, run a standup to check if a previous Build sprint was interrupt
 factory agent scrummaster --task "Run standup for $PROJECT_PATH. Read .factory/events.jsonl, reviews, experiments, strategy, and results.tsv. Report sprint status (FRESH or RESUME), completed phases, in-progress work, pending work, and a specific recommendation for what to do next." --project "$PROJECT_PATH" --timeout 120
 ```
 
-- **If RESUME:** Follow the recommendation. Skip completed build phases.
-- **If FRESH:** Proceed with B0 (Research) below.
+- **If RESUME:** Follow the recommendation. Skip completed build phases. Do NOT log a new `sprint.started` — the existing one from the interrupted sprint is the active boundary.
+- **If FRESH:** Log sprint start and proceed with B0 (Research) below.
 
 ```bash
+# Only on FRESH start — do NOT run this on RESUME
 factory log "$PROJECT_PATH" "sprint.started" --data '{"mode": "build"}'
 ```
 
@@ -717,12 +716,11 @@ factory agent scrummaster --task "Run standup for $PROJECT_PATH. Read .factory/e
 ```
 
 Read the standup report:
-- **If RESUME:** Follow the recommendation. Skip completed phases. Read the surviving strategy from `.factory/strategy/current.md`. Resume at the first incomplete item. Do NOT re-run completed phases.
-- **If FRESH:** Proceed with Step 0a (Observe) below.
-
-Log the sprint start:
+- **If RESUME:** Follow the recommendation. Skip completed phases. Read the surviving strategy from `.factory/strategy/current.md`. Resume at the first incomplete item. Do NOT re-run completed phases. Do NOT log a new `sprint.started` — the existing one from the interrupted sprint is the active boundary.
+- **If FRESH:** Log sprint start and proceed with Step 0a (Observe) below.
 
 ```bash
+# Only on FRESH start — do NOT run this on RESUME
 factory log "$PROJECT_PATH" "sprint.started" --data '{"mode": "improve"}'
 ```
 

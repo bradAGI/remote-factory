@@ -866,19 +866,17 @@ def cmd_log(args: argparse.Namespace) -> int:
 
     project_path = Path(args.path).resolve()
     event_type = args.event_type
-    data_str = getattr(args, "data", None)
 
-    if data_str:
+    if args.data:
         try:
-            data = json_mod.loads(data_str)
+            data = json_mod.loads(args.data)
         except json_mod.JSONDecodeError as exc:
             print(f"Error: invalid JSON in --data: {exc}", file=sys.stderr)
             return 1
     else:
         data = {}
 
-    agent = getattr(args, "agent", None)
-    emit_event(project_path, event_type, agent=agent, data=data)
+    emit_event(project_path, event_type, agent=args.agent, data=data)
     return 0
 
 

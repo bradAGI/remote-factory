@@ -53,7 +53,7 @@ Output a markdown report with this exact structure:
 
 **Status:** FRESH
 **Mode:** <detected mode>
-**Current score:** <composite score from last eval.completed event or results.tsv>
+**Current score:** <composite score from last phase.eval.completed or eval.completed event, or results.tsv>
 **Backlog items:** <count from backlog if available>
 
 ### Last Sprint Summary
