@@ -1188,6 +1188,10 @@ def cmd_ceo(args: argparse.Namespace) -> int:
         interactive_idea=interactive_idea,
     )
 
+    standup = _run_standup(project_path, ceo_mode, model=model)
+    if standup:
+        task += f"\n\n## Sprint Standup\n\n{standup}"
+
     if headless:
         # Non-interactive pipe mode (for scripting, cron, tmux)
         # Uses completion guard to auto-resume on premature exit
@@ -1565,6 +1569,32 @@ def _auto_detect_mode(project_path: Path, has_prompt: bool = False, force_fresh:
     return mode
 
 
+def _run_standup(project_path: Path, mode: str, model: str | None = None) -> str | None:
+    """Run the scrummaster agent and return its standup report.
+
+    Returns the report text, or None if the scrummaster fails or .factory/ doesn't exist.
+    """
+    factory_dir = project_path / ".factory"
+    if not factory_dir.is_dir():
+        return None
+
+    from factory.agents.runner import invoke_agent
+
+    task = (
+        f"Run standup for {project_path}. "
+        f"Read .factory/events.jsonl, reviews, experiments, strategy, and results.tsv. "
+        f"Report sprint status (FRESH or RESUME), completed phases, in-progress work, "
+        f"pending work, and a specific recommendation for what to do next."
+    )
+    result, code = _run(invoke_agent(
+        "scrummaster", task, project_path,
+        timeout=120.0, dangerously_skip_permissions=True, model=model,
+    ))
+    if code != 0:
+        return None
+    return result
+
+
 def _build_ceo_task(
     project_path: Path,
     mode: str,
@@ -1739,6 +1769,10 @@ def _run_single_cycle(
         min_growth=min_growth, max_new=max_new, branch=branch,
         discover_only=discover_only,
     )
+
+    standup = _run_standup(project_path, mode, model=model)
+    if standup:
+        task += f"\n\n## Sprint Standup\n\n{standup}"
 
     result, code = _run(invoke_agent(
         "ceo",

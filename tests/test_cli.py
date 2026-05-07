@@ -588,7 +588,7 @@ class TestHeartbeatLoop:
              patch("factory.cli._chain_modes", return_value=0):
             result = main(["run", str(tmp_path)])
         assert result == 0
-        mock_agent.assert_called_once()
+        mock_agent.assert_called_once()  # no .factory/ dir → no standup call
 
     def test_loop_exits_after_max_cycles(self, tmp_path, capsys):
         """With --loop --max-cycles=3, runs exactly 3 cycles then exits."""
@@ -599,7 +599,8 @@ class TestHeartbeatLoop:
                 "run", str(tmp_path), "--loop", "--max-cycles", "3", "--interval", "10",
             ])
         assert result == 0
-        assert mock_agent.call_count == 3
+        # 3 CEO calls + 3 scrummaster standup calls (cycle.started creates .factory/)
+        assert mock_agent.call_count == 6
         assert mock_sleep.call_count == 2
         mock_sleep.assert_called_with(10)
 

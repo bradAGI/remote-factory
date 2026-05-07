@@ -178,9 +178,7 @@ Read the target branch from `.factory/config.json` field `target_branch`. If abs
 
 ### Resuming from a Crash
 
-The Scrum Master agent handles crash recovery automatically. At the start of every cycle, you run `factory agent scrummaster` as Step 0 (see Improve Mode below). The Scrum Master reads `.factory/events.jsonl` and all project state to determine if a previous sprint was interrupted.
-
-If the Scrum Master reports **RESUME**, follow its recommendation exactly — it will tell you which phases are complete and where to pick up. Do NOT restart from scratch.
+Crash recovery is handled automatically by the factory infrastructure. Before you are spawned, the Scrum Master agent runs and its report is injected into your task as a `## Sprint Standup` section. If it says RESUME, follow its recommendation — skip completed phases and pick up where the last session left off.
 
 > **Note:** Use `factory log` to record milestones at each phase boundary.
 > The Scrum Master reads these on the next startup to determine sprint state.
@@ -378,16 +376,13 @@ When the user approves the spec:
 
 The project doesn't exist or is incomplete. **You MUST still follow the full agent pipeline.** Do NOT jump straight to the Builder.
 
-### Step B-0: Sprint Standup (Scrum Master)
+### Step B-0: Sprint Standup (Enforced by Infrastructure)
 
-Before any work, run a standup to check if a previous Build sprint was interrupted:
+The factory infrastructure runs the Scrum Master agent **before** spawning you and injects the standup report into your task as a `## Sprint Standup` section. You do not need to invoke the scrummaster yourself.
 
-```bash
-factory agent scrummaster --task "Run standup for $PROJECT_PATH. Read .factory/events.jsonl, reviews, experiments, strategy, and results.tsv. Report sprint status (FRESH or RESUME), completed phases, in-progress work, pending work, and a specific recommendation for what to do next." --project "$PROJECT_PATH" --timeout 120
-```
-
-- **If RESUME:** Follow the recommendation. Skip completed build phases. Do NOT log a new `sprint.started` — the existing one from the interrupted sprint is the active boundary.
-- **If FRESH:** Log sprint start and proceed with B0 (Research) below.
+**Read your `## Sprint Standup` section (if present) and act on it:**
+- **If RESUME:** Follow the recommendation. Skip completed build phases. Do NOT log a new `sprint.started`.
+- **If FRESH (or no standup section):** Log sprint start and proceed with B0 (Research) below.
 
 ```bash
 # Only on FRESH start — do NOT run this on RESUME
@@ -707,17 +702,13 @@ After Review mode, state is `has_factory`. Proceed to **Improve mode**.
 
 The core evolution loop. You orchestrate agents through a systematic experiment cycle.
 
-### Step 0: Sprint Standup (Scrum Master)
+### Step 0: Sprint Standup (Enforced by Infrastructure)
 
-Before any work, run a standup to check sprint state:
+The factory infrastructure runs the Scrum Master agent **before** spawning you and injects the standup report into your task as a `## Sprint Standup` section. You do not need to invoke the scrummaster yourself — it has already run.
 
-```bash
-factory agent scrummaster --task "Run standup for $PROJECT_PATH. Read .factory/events.jsonl, reviews, experiments, strategy, and results.tsv. Report sprint status (FRESH or RESUME), completed phases, in-progress work, pending work, and a specific recommendation for what to do next." --project "$PROJECT_PATH" --timeout 120
-```
-
-Read the standup report:
-- **If RESUME:** Follow the recommendation. Skip completed phases. Read the surviving strategy from `.factory/strategy/current.md`. Resume at the first incomplete item. Do NOT re-run completed phases. Do NOT log a new `sprint.started` — the existing one from the interrupted sprint is the active boundary.
-- **If FRESH:** Log sprint start and proceed with Step 0a (Observe) below.
+**Read your `## Sprint Standup` section (if present) and act on it:**
+- **If RESUME:** Follow the recommendation. Skip completed phases. Read the surviving strategy from `.factory/strategy/current.md`. Resume at the first incomplete item. Do NOT re-run completed phases. Do NOT log a new `sprint.started`.
+- **If FRESH (or no standup section):** Log sprint start and proceed with Step 0a (Observe) below.
 
 ```bash
 # Only on FRESH start — do NOT run this on RESUME
